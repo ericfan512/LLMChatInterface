@@ -47,7 +47,6 @@ def use_gemini(api_key, context, sysprompt):
 
 def use_ollama(sysprompt):
     st.title("Subject Help")
-    print(sysprompt)
 
     if "omessages" not in st.session_state:
         st.session_state.omessages = [{"role": "system", "content": sysprompt}]
@@ -85,11 +84,91 @@ def use_ollama(sysprompt):
         except Exception as e:
             st.error(str(e))
 
+# def generate_heygen_video(api_key, text):
+#     headers = {
+#         "Accept": "application/json",
+#         "Content-Type": "application/json",
+#         "X-Api-Key": api_key
+#     }
+#     payload = {
+#         "video_inputs": [
+#             {
+#                 "avatar_id": "avatar-0f3f7008-eacc-4c73-b335-e48f43f82c4e",
+#                 "voice": {
+#                     "type": "text",
+#                     "voice_id": "6be73833ef9a4eb0aeee399b8fe9d62b",
+#                     "input_text": text
+#                 },
+#                 "script": {
+#                     "type": "text",
+#                     "input": text
+#                 }
+#             }
+#         ],
+#         "test": True
+#     }
+
+#     try:
+#         res = r.post("https://api.heygen.com/v2/video/generate", json=payload, headers=headers)
+#         st.write(f"Generate status: {res.status_code}")
+#         st.write(f"Generate response: {res.text}")
+
+#         if res.status_code == 200:
+#             data = res.json().get("data", {})
+#             video_id = data.get("video_id") or data.get("id") or data.get("videoId")
+#             st.write(f"Extracted video_id: {video_id}")
+
+#             if not video_id:
+#                 st.error("Failed to get video ID.")
+#                 return
+
+#             import time
+#             time.sleep(2)  # small delay before polling
+
+#             status = "processing"
+#             max_wait = 60  # max wait time in seconds
+#             waited = 0
+#             interval = 5
+
+#             while status == "processing" and waited < max_wait:
+#                 poll_url = f"https://api.heygen.com/v2/videos/{video_id}/status"
+#                 poll = r.get(poll_url, headers=headers)
+
+#                 st.write(f"Polling status: {poll.status_code}, response: {poll.text}")
+
+#                 if poll.status_code == 200 and poll.text.strip():
+#                     poll_data = poll.json()
+#                     status = poll_data.get("data", {}).get("status")
+#                     if status == "done":
+#                         video_url = poll_data["data"]["video_url"]
+#                         st.video(video_url)
+#                         return
+#                     elif status == "failed":
+#                         st.error("Video generation failed.")
+#                         return
+#                 else:
+#                     st.error(f"Polling failed with status {poll.status_code}")
+#                     return
+
+#                 time.sleep(interval)
+#                 waited += interval
+
+#             if status == "processing":
+#                 st.warning("Video generation still in progress. Please wait a moment.")
+#         else:
+#             st.error(f"Error from HeyGen: {res.text}")
+
+#     except Exception as e:
+#         st.error(f"HeyGen request failed: {str(e)}")
+
+
+
 with st.sidebar:
     api_choice = st.selectbox("Choose API Provider", ["Gemini", "Ollama"])
 
     choices = ["General", "Mathematics", "Science", "English", "History"]
     chat_choice = st.selectbox("Subject Choice", choices, index=0)
+    # heygen_api_key = st.text_input("HeyGen API key", type="password", value="(API key)")
 
     if "current_subject" not in st.session_state:
         st.session_state.current_subject = chat_choice
@@ -129,7 +208,6 @@ with st.sidebar:
     ]
 
     sysprompt = prompts[choices.index(chat_choice)]
-    print(sysprompt)
 
     if st.button("Clear History"):
         st.session_state.messages = []
@@ -137,6 +215,21 @@ with st.sidebar:
             del st.session_state.chat
         if "omessages" in st.session_state:
             del st.session_state.omessages
+    # if st.button("Generate HeyGen Video"):
+    #     last_response = None
+    #     if api_choice == "Gemini" and st.session_state.get("messages"):
+    #         last_response = st.session_state.messages[-1]["AI"]
+    #     elif api_choice == "Ollama":
+    #         for msg in reversed(st.session_state.get("omessages", [])):
+    #             if msg["role"] == "ai":
+    #                 last_response = msg["content"]
+    #                 break
+
+    #     if last_response:
+    #         generate_heygen_video(heygen_api_key, last_response)
+    #     else:
+    #         st.warning("No AI response found to generate video.")
+
 
 if api_choice == "Gemini":
     with st.sidebar:
